@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # SmartResQ
 
 Emergency Ambulance Routing and Shortest Path Optimization Using Graph Algorithms.
@@ -9,3 +10,6 @@ The project source code and documentation are located in [`SmartResQ/`](file:///
 - [`SmartResQ/frontend/`](file:///E:/DSA_Project/SmartResQ/frontend)
 - [`SmartResQ/data/`](file:///E:/DSA_Project/SmartResQ/data)
 - [`SmartResQ/docs/`](file:///E:/DSA_Project/SmartResQ/docs)
+=======
+# Smart-ResQ
+>>>>>>> 69bfa051564c50849a42e5527f402f3c985db64a
