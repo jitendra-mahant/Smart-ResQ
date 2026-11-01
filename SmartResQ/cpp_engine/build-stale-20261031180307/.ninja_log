@@ -1,0 +1,19 @@
+# ninja log v7
+3	271	8150562975527153	build.ninja	b8826191aa38788
+3	271	8150562975487204	E:/DSA_Project/SmartResQ/cpp_engine/build/cmake_install.cmake	b8826191aa38788
+23	1319	8150552459911420	CMakeFiles/smartresq_engine.dir/src/main.cpp.obj	a7fc57cd29f390cc
+108	761	8150546463852023	CMakeFiles/smartresq_core.dir/src/Dijkstra.cpp.obj	a06ca2676ea3f21b
+29	1522	8150549635302200	CMakeFiles/smartresq_tests.dir/tests/test_graph.cpp.obj	90743fb91e0fdf2d
+8	1624	8150546462833576	CMakeFiles/smartresq_core.dir/src/Graph.cpp.obj	972af68512b006f7
+1769	2062	8150552477370024	libsmartresq_core.a	6f3907937a921151
+2069	2421	8150552480375710	smartresq_tests.exe	156da381ae526c71
+2062	2429	8150552480307815	smartresq_engine.exe	b2d96b2c0d1206c2
+15	1488	8150546462913652	CMakeFiles/smartresq_core.dir/src/GraphAlgorithms.cpp.obj	95abeba13a02744c
+22	1422	8150546462982541	CMakeFiles/smartresq_core.dir/src/EmergencyDispatcher.cpp.obj	84d89433edc618ba
+7	920	8150549635082190	CMakeFiles/smartresq_core.dir/src/RoadBlockageSimulator.cpp.obj	cb328ac1a0bcd75e
+13	1768	8150552459811398	CMakeFiles/smartresq_core.dir/src/EngineApi.cpp.obj	983aece94f63477
+18	1175	8150562982429816	CMakeFiles/smartresq_engine.dir/src/main.cpp.obj	a7fc57cd29f390cc
+10	1560	8150562982339676	CMakeFiles/smartresq_core.dir/src/EngineApi.cpp.obj	983aece94f63477
+1561	1850	8150562997852117	libsmartresq_core.a	6f3907937a921151
+1858	2127	8150563000815468	smartresq_tests.exe	156da381ae526c71
+1850	2141	8150563000742024	smartresq_engine.exe	b2d96b2c0d1206c2

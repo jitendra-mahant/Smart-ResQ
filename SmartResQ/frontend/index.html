@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartResQ - Emergency Ambulance Routing & Graph Optimization</title>
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin="" />
+
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/style.css?v=20261031_v3">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- ================================================================== -->
+    <!-- 1. HEADER SECTION                                                  -->
+    <!-- ================================================================== -->
+    <header class="navbar">
+      <div class="brand">
+        <div class="logo-badge">🚑</div>
+        <div class="brand-text">
+          <h1>SmartResQ <span class="badge-tag">DSA C++17</span></h1>
+          <p class="subtitle">Emergency Ambulance Routing & Shortest Path Optimization</p>
+        </div>
+      </div>
+
+      <div class="header-center">
+        <div class="simulation-badge" id="blockage-counter-badge" title="Active road closures">
+          <span class="badge-icon">🛑</span>
+          <span id="blocked-count-label">0 Road Blockages</span>
+        </div>
+        <div class="simulation-badge" id="fleet-counter-badge" title="Dispatched ambulance units">
+          <span class="badge-icon">🚑</span>
+          <span id="dispatched-count-label">0 Dispatched</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <div class="status-indicator" id="system-status">
+          <span class="status-dot"></span>
+          <span class="status-label">C++ Engine Ready</span>
+        </div>
+        <button id="header-reset-btn" class="btn btn-secondary btn-sm" title="Clear all allocations and reopen all roads">
+          <span>🔄 Reset Simulation</span>
+        </button>
+      </div>
+    </header>
+
+    <div id="app-notice" class="app-notice hidden" role="status" aria-live="polite"></div>
+
+    <!-- ================================================================== -->
+    <!-- MAIN APPLICATION WORKSPACE                                         -->
+    <!-- ================================================================== -->
+    <main class="main-content">
+      <!-- SIDEBAR CONTROLS & PANELS -->
+      <aside class="sidebar">
+        <!-- Navigation Tabs -->
+        <nav class="sidebar-tabs">
+          <button class="tab-btn active" data-tab="tab-dispatch">
+            <span class="tab-icon">🚨</span> Emergency Mission
+          </button>
+          <button class="tab-btn" data-tab="tab-blockage">
+            <span class="tab-icon">🚧</span> Road Blockages
+          </button>
+          <button class="tab-btn" data-tab="tab-compare">
+            <span class="tab-icon">⚖️</span> BFS vs Dijkstra
+          </button>
+        </nav>
+
+        <div class="tab-content-wrapper">
+          <!-- ============================================================ -->
+          <!-- TAB 1: EMERGENCY MISSION (Sections 3, 4, 5)                  -->
+          <!-- ============================================================ -->
+          <div class="tab-pane active" id="tab-dispatch">
+            <!-- 3. EMERGENCY SIMULATION PANEL -->
+            <section class="card panel-card">
+              <div class="card-header">
+                <h2>🚨 Emergency Incident</h2>
+                <span class="chip chip-red">Step 1</span>
+              </div>
+              <p class="help-text">Select an emergency site from the list or click directly on any city node.</p>
+
+              <div class="form-group">
+                <label for="incident-select">Incident Location:</label>
+                <select id="incident-select" class="form-select">
+                  <option value="" disabled selected>Loading city locations...</option>
+                </select>
+              </div>
+
+              <button id="dispatch-btn" class="btn btn-primary btn-block" disabled>
+                <span>⚡ Calculate & Dispatch Nearest Ambulance</span>
+              </button>
+            </section>
+
+            <!-- 3b. SELECTED AMBULANCE PANEL -->
+            <section class="card panel-card" id="ambulance-result-card">
+              <div class="card-header">
+                <h2>🚑 Dispatched Ambulance</h2>
+                <span class="chip chip-blue" id="amb-status-chip">Ready</span>
+              </div>
+              <div id="amb-empty-state" class="empty-state">
+                No active dispatch. Select an emergency location above.
+              </div>
+              <div id="amb-details" class="details-content hidden">
+                <div class="metric-row">
+                  <span class="metric-label">Selected Unit</span>
+                  <strong class="metric-value text-blue" id="amb-name">--</strong>
+                </div>
+                <div class="metric-row">
+                  <span class="metric-label">Ambulance ID</span>
+                  <span class="mono-badge" id="amb-id">--</span>
+                </div>
+                <div class="metric-row">
+                  <span class="metric-label">Base Station</span>
+                  <span class="metric-value" id="amb-station">--</span>
+                </div>
+                <div class="metric-row highlight-blue">
+                  <span class="metric-label">Travel Distance (Leg 1)</span>
+                  <strong class="metric-value" id="amb-dist">-- km</strong>
+                </div>
+                <div class="metric-row">
+                  <span class="metric-label">Estimated response</span>
+                  <strong class="metric-value" id="amb-eta">-- min</strong>
+                </div>
+              </div>
+            </section>
+
+            <!-- 5. HOSPITAL SELECTION & ALTERNATIVES PANEL -->
+            <section class="card panel-card" id="hospital-result-card">
+              <div class="card-header">
+                <h2>🏥 Nearest Hospital & Alternatives</h2>
+                <span class="chip chip-green">Step 2</span>
+              </div>
+              <div id="hosp-empty-state" class="empty-state">
+                Hospital routing computed simultaneously upon dispatch.
+              </div>
+              <div id="hosp-details" class="details-content hidden">
+                <div class="metric-row">
+                  <span class="metric-label">Nearest Hospital</span>
+                  <strong class="metric-value text-green" id="hosp-name">--</strong>
+                </div>
+                <div class="metric-row">
+                  <span class="metric-label">Hospital Location ID</span>
+                  <span class="mono-badge" id="hosp-loc">--</span>
+                </div>
+                <div class="metric-row highlight-green">
+                  <span class="metric-label">Transfer Distance (Leg 2)</span>
+                  <strong class="metric-value" id="hosp-dist">-- km</strong>
+                </div>
+
+                <div class="sub-section-title">Ranked Alternative Facilities:</div>
+                <div class="alternatives-list" id="hosp-alternatives-list">
+                  <!-- Injected dynamically -->
+                </div>
+              </div>
+            </section>
+
+            <!-- 4. MISSION ROUTE PANEL -->
+            <section class="card panel-card" id="route-panel">
+              <div class="card-header">
+                <h2>🗺️ Complete Mission Route</h2>
+                <span class="chip chip-amber" id="route-algo-chip">C++ Dijkstra</span>
+              </div>
+              <div id="route-empty-state" class="empty-state">
+                Route trajectory and waypoints will appear after dispatch.
+              </div>
+              <div id="route-details" class="details-content hidden">
+                <div class="mission-stats-grid">
+                  <div class="stat-box">
+                    <span class="stat-label">Leg 1 (Ambulance)</span>
+                    <strong class="stat-value text-amber" id="route-leg1-km">-- km</strong>
+                  </div>
+                  <div class="stat-box">
+                    <span class="stat-label">Leg 2 (Hospital)</span>
+                    <strong class="stat-value text-cyan" id="route-leg2-km">-- km</strong>
+                  </div>
+                  <div class="stat-box">
+                    <span class="stat-label">Simulated response ETA (40 km/h)</span>
+                    <strong class="stat-value" id="route-eta">-- min</strong>
+                  </div>
+                  <div class="stat-box highlight-stat">
+                    <span class="stat-label">Total Mission Distance</span>
+                    <strong class="stat-value" id="route-total-km">-- km</strong>
+                  </div>
+                </div>
+
+                <div class="sub-section-title">Leg 1 · Ambulance response → incident</div>
+                <div class="waypoints-flow" id="route-leg1-waypoints">
+                  <!-- Injected dynamically -->
+                </div>
+                <div class="sub-section-title">Leg 2 · Incident → selected hospital</div>
+                <div class="waypoints-flow" id="route-leg2-waypoints">
+                  <!-- Injected dynamically -->
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <!-- ============================================================ -->
+          <!-- TAB 2: ROAD BLOCKAGE SIMULATION (Section 6)                  -->
+          <!-- ============================================================ -->
+          <div class="tab-pane" id="tab-blockage">
+            <section class="card panel-card">
+              <div class="card-header">
+                <h2>🚧 Simulate Road Blockage</h2>
+                <span class="chip chip-amber">Dynamic Graph</span>
+              </div>
+              <p class="help-text">Simulate traffic accidents or construction. You can also click directly on any road line on the map to toggle its state.</p>
+
+              <div class="form-group">
+                <label for="road-select">Select Road to Block / Reopen:</label>
+                <select id="road-select" class="form-select">
+                  <option value="" disabled selected>Loading city roads...</option>
+                </select>
+              </div>
+
+              <div class="btn-group">
+                <button id="btn-block-road" class="btn btn-danger flex-1">
+                  <span>🛑 Block Road</span>
+                </button>
+                <button id="btn-reopen-road" class="btn btn-success flex-1">
+                  <span>🟢 Reopen Road</span>
+                </button>
+              </div>
+            </section>
+
+            <section class="card panel-card">
+              <div class="card-header">
+                <h2>🛣️ City Road Network</h2>
+                <span class="chip chip-blue" id="road-network-count">29 Roads</span>
+              </div>
+              <p class="help-text">Road state updates on the map and in route calculations. Select an action to close or reopen a segment.</p>
+              <div class="road-table-wrap">
+                <table class="road-table">
+                  <thead>
+                    <tr>
+                      <th>Road</th>
+                      <th>Connected locations</th>
+                      <th>Distance</th>
+                      <th>Status / action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="road-table-body"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <!-- Active Blocked Roads List -->
+            <section class="card panel-card">
+              <div class="card-header">
+                <h2>🛑 Active Road Closures</h2>
+                <span class="chip chip-red" id="active-blocked-badge">0 Active</span>
+              </div>
+              <div id="no-blocked-msg" class="empty-state">
+                All city roads are currently open. No active closures.
+              </div>
+              <div id="active-blocked-list" class="blocked-roads-container">
+                <!-- Dynamically injected badges -->
+              </div>
+            </section>
+
+            <!-- Recalculate Detour Around Blockage -->
+            <section class="card panel-card">
+              <div class="card-header">
+                <h2>🔄 Detour Recalculation</h2>
+                <span class="chip chip-blue">C++ Dijkstra Detour</span>
+              </div>
+              <p class="help-text">Recalculate shortest path between two points to verify dynamic avoidance of blocked roads.</p>
+
+              <div class="form-row">
+                <div class="form-group flex-1">
+                  <label for="detour-origin-select">Origin:</label>
+                  <select id="detour-origin-select" class="form-select"></select>
+                </div>
+                <div class="form-group flex-1">
+                  <label for="detour-dest-select">Destination:</label>
+                  <select id="detour-dest-select" class="form-select"></select>
+                </div>
+              </div>
+
+              <button id="btn-recalculate-detour" class="btn btn-primary btn-block">
+                <span>⚡ Compute Detour Route</span>
+              </button>
+
+              <div id="detour-result-box" class="detour-box hidden">
+                <div class="detour-comparison">
+                  <div class="metric-row">
+                    <span class="metric-label">Recalculated Distance:</span>
+                    <strong class="metric-value text-amber" id="detour-distance">-- km</strong>
+                  </div>
+                  <div class="metric-row">
+                    <span class="metric-label">Total Edges (Hops):</span>
+                    <strong class="metric-value" id="detour-hops">--</strong>
+                  </div>
+                  <div class="metric-row">
+                    <span class="metric-label">Status:</span>
+                    <span class="chip chip-green" id="detour-status">Detour Active</span>
+                  </div>
+                </div>
+                <div class="sub-section-title">Detour Path Nodes:</div>
+                <div class="waypoints-flow" id="detour-waypoints"></div>
+              </div>
+            </section>
+          </div>
+
+          <!-- ============================================================ -->
+          <!-- TAB 3: ALGORITHM COMPARISON (Section 7)                      -->
+          <!-- ============================================================ -->
+          <div class="tab-pane" id="tab-compare">
+            <section class="card panel-card">
+              <div class="card-header">
+                <h2>⚖️ Algorithm Benchmark</h2>
+                <span class="chip chip-purple">C++ Native Solvers</span>
+              </div>
+              <p class="help-text">Compare Dijkstra's minimum-distance optimization versus Breadth-First Search (BFS) minimum-hop routing on the simulated city network.</p>
+
+              <div class="form-row">
+                <div class="form-group flex-1">
+                  <label for="compare-origin-select">Origin:</label>
+                  <select id="compare-origin-select" class="form-select"></select>
+                </div>
+                <div class="form-group flex-1">
+                  <label for="compare-dest-select">Destination:</label>
+                  <select id="compare-dest-select" class="form-select"></select>
+                </div>
+              </div>
+
+              <button id="btn-run-comparison" class="btn btn-purple btn-block">
+                <span>⚡ Run Comparative Analysis</span>
+              </button>
+            </section>
+
+            <!-- Comparison Results Grid -->
+            <div id="compare-results-container" class="hidden">
+              <div class="comparison-cards-grid">
+                <!-- Dijkstra Card -->
+                <div class="compare-card dijkstra-card">
+                  <div class="compare-card-header">
+                    <h3>Dijkstra's Algorithm</h3>
+                    <span class="chip chip-amber">Min-Distance</span>
+                  </div>
+                  <div class="compare-metric">
+                    <span class="compare-label">Total Distance</span>
+                    <strong class="compare-value text-amber" id="cmp-dijkstra-dist">-- km</strong>
+                  </div>
+                  <div class="compare-metric">
+                    <span class="compare-label">Road Edges (Hops)</span>
+                    <strong class="compare-value" id="cmp-dijkstra-hops">--</strong>
+                  </div>
+                  <div class="compare-metric">
+                    <span class="compare-label">Data Structure</span>
+                    <span class="mono-badge">Min-Heap PQ</span>
+                  </div>
+                  <div class="compare-metric">
+                    <span class="compare-label">Complexity</span>
+                    <span class="mono-badge">O((V+E) log V)</span>
+                  </div>
+                  <div class="sub-section-title">Path Nodes:</div>
+                  <div class="waypoints-flow mini" id="cmp-dijkstra-path"></div>
+                  <p class="algorithm-result" id="cmp-dijkstra-summary">Run the comparison to see the result.</p>
+                  <button id="btn-show-dijkstra-map" class="btn btn-secondary btn-sm btn-block mt-2">
+                    Show Dijkstra on Map
+                  </button>
+                </div>
+
+                <!-- BFS Card -->
+                <div class="compare-card bfs-card">
+                  <div class="compare-card-header">
+                    <h3>Breadth-First Search</h3>
+                    <span class="chip chip-purple">Min-Hops</span>
+                  </div>
+                  <div class="compare-metric">
+                    <span class="compare-label">Total Distance</span>
+                    <strong class="compare-value text-purple" id="cmp-bfs-dist">-- km</strong>
+                  </div>
+                  <div class="compare-metric">
+                    <span class="compare-label">Road Edges (Hops)</span>
+                    <strong class="compare-value" id="cmp-bfs-hops">--</strong>
+                  </div>
+                  <div class="compare-metric">
+                    <span class="compare-label">Data Structure</span>
+                    <span class="mono-badge">FIFO Queue</span>
+                  </div>
+                  <div class="compare-metric">
+                    <span class="compare-label">Complexity</span>
+                    <span class="mono-badge">O(V + E)</span>
+                  </div>
+                  <div class="sub-section-title">Path Nodes:</div>
+                  <div class="waypoints-flow mini" id="cmp-bfs-path"></div>
+                  <p class="algorithm-result" id="cmp-bfs-summary">Run the comparison to see the result.</p>
+                  <button id="btn-show-bfs-map" class="btn btn-secondary btn-sm btn-block mt-2">
+                    Show BFS on Map
+                  </button>
+                </div>
+              </div>
+
+              <!-- Insight Summary Banner -->
+              <div class="comparison-insight" id="cmp-insight-banner">
+                <strong>DSA Optimization Insight:</strong>
+                <p id="cmp-insight-text">Computing comparison...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer Graph DSA Info -->
+        <footer class="sidebar-footer">
+          <div class="engine-meta">
+            <span><strong>Representation:</strong> Weighted Adjacency List</span>
+            <span><strong>Solvers:</strong> Dijkstra $\mathcal{O}((V+E)\log V)$ & BFS $\mathcal{O}(V+E)$</span>
+          </div>
+        </footer>
+      </aside>
+
+      <!-- ============================================================== -->
+      <!-- 2. MAP VIEWPORT SECTION                                        -->
+      <!-- ============================================================== -->
+      <section class="map-container">
+        <div id="map"></div>
+
+        <!-- Floating Map Action Toolbar -->
+        <div class="map-floating-toolbar">
+          <button id="btn-map-reset-view" class="map-tool-btn" title="Center on Metropolis">
+            🎯 Recenter
+          </button>
+          <button id="btn-map-clear-routes" class="map-tool-btn" title="Clear displayed route polylines">
+            🧹 Clear Routes
+          </button>
+        </div>
+
+        <!-- Floating Map Legend -->
+        <div class="map-overlay-legend">
+          <div class="legend-title">City Map Legend</div>
+          <div class="legend-item">
+            <span class="legend-color node-legend"></span>
+            <span>City Junction (18 Locations)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color amb-legend"></span>
+            <span>Ambulance Base (3 Units)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color hosp-legend"></span>
+            <span>Trauma Center (3 Hospitals)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color incident-legend"></span>
+            <span>Emergency Incident</span>
+          </div>
+          <div class="legend-divider"></div>
+          <div class="legend-item">
+            <span class="legend-line route-amb-line"></span>
+            <span>Ambulance Route (Leg 1)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-line route-hosp-line"></span>
+            <span>Hospital Transport (Leg 2)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-line road-blocked-line"></span>
+            <span>Blocked Road (Click to Reopen)</span>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+          crossorigin=""></script>
+  <script src="js/app.js?v=20261031_v3"></script>
+</body>
+</html>

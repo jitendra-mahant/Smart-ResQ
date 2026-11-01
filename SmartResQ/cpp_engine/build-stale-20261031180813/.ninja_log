@@ -1,0 +1,12 @@
+# ninja log v7
+90	904	8151531906684521	CMakeFiles/smartresq_core.dir/src/Dijkstra.cpp.obj	55e0956a1ec2cc9a
+73	1229	8151531906557239	CMakeFiles/smartresq_core.dir/src/RoadBlockageSimulator.cpp.obj	5eb6c527ea9d1d02
+100	1481	8151531906825426	CMakeFiles/smartresq_engine.dir/src/main.cpp.obj	ed60d55369581fe6
+66	1668	8151531906442515	CMakeFiles/smartresq_core.dir/src/EmergencyDispatcher.cpp.obj	f6008b793d54a964
+53	1738	8151531906376438	CMakeFiles/smartresq_core.dir/src/GraphAlgorithms.cpp.obj	1f59176232d1016d
+42	1818	8151531906250735	CMakeFiles/smartresq_core.dir/src/Graph.cpp.obj	4f949dbf3652279b
+108	1833	8151531906985575	CMakeFiles/smartresq_tests.dir/tests/test_graph.cpp.obj	858ac9482659674c
+83	1906	8151531906608723	CMakeFiles/smartresq_core.dir/src/EngineApi.cpp.obj	ae0326bdec6d6e21
+1906	2339	8151531924891892	libsmartresq_core.a	1244859f6b7c1e8a
+2351	2584	8151531929338696	smartresq_tests.exe	3e0b86e2a0e9fc51
+2339	2592	8151531929161028	smartresq_engine.exe	ee18acb0775b6db7

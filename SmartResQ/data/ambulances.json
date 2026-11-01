@@ -1,0 +1,30 @@
+[
+  {
+    "id": "AMB-01",
+    "name": "Ambulance Alpha",
+    "location_id": "L5",
+    "station_name": "Central Railway Station",
+    "vehicle_type": "Advanced Life Support (ALS)",
+    "status": "Available",
+    "contact": "+1-800-555-0191"
+  },
+  {
+    "id": "AMB-02",
+    "name": "Ambulance Bravo",
+    "location_id": "L10",
+    "station_name": "South Suburb Hub",
+    "vehicle_type": "Basic Life Support (BLS)",
+    "status": "Available",
+    "contact": "+1-800-555-0192"
+  },
+  {
+    "id": "AMB-03",
+    "name": "Ambulance Charlie",
+    "location_id": "L16",
+    "station_name": "Heritage Gate",
+    "vehicle_type": "Critical Care Mobile ICU",
+    "status": "Available",
+    "contact": "+1-800-555-0193"
+  }
+]
+

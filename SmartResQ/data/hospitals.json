@@ -1,0 +1,30 @@
+[
+  {
+    "id": "HOSP-01",
+    "name": "City General Hospital",
+    "location_id": "L2",
+    "tier": "Level 1 Regional Trauma Center",
+    "available_icu_beds": 15,
+    "total_beds": 120,
+    "emergency_helpline": "+1-800-555-0101"
+  },
+  {
+    "id": "HOSP-02",
+    "name": "Apex Trauma Center",
+    "location_id": "L8",
+    "tier": "Level 2 Emergency Trauma Unit",
+    "available_icu_beds": 12,
+    "total_beds": 85,
+    "emergency_helpline": "+1-800-555-0102"
+  },
+  {
+    "id": "HOSP-03",
+    "name": "Sunrise Specialty Hospital",
+    "location_id": "L14",
+    "tier": "Comprehensive Specialty & Cardiac Center",
+    "available_icu_beds": 20,
+    "total_beds": 110,
+    "emergency_helpline": "+1-800-555-0103"
+  }
+]
+
